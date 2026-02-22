@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Showcase: The Grammar of Guessing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600;1,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brown-dark: #442C2E;
+            --green-theme: #5F8670;
+            --tan-theme: #BCA37F;
+            --parchment: #FDF6E3;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: var(--parchment);
+            color: var(--brown-dark);
+            overflow-x: hidden;
+            margin: 0;
+            /* Animated subtle noise/paper texture */
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+            background-attachment: fixed;
+        }
+        
+        h1, h2, h3, h4, .font-serif { 
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Cinematic Scroll Reveals */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Premium Glassmorphism */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px rgba(68, 44, 46, 0.05);
+        }
+        .dark-glass-panel {
+            background: rgba(68, 44, 46, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(188, 163, 127, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Components & Loaders */
+        .loader { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid var(--tan-theme); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        .small-loader { width: 16px; height: 16px; border: 2px solid rgba(95,134,112,0.2); border-top: 2px solid var(--green-theme); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Hook Items (Artifacts) - 3D Hover */
+        .hook-card {
+            background: linear-gradient(145deg, #ffffff 0%, #FFF8DC 100%);
+            border: 1px solid rgba(210, 180, 140, 0.5);
+            border-radius: 1rem;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 10px 25px rgba(68, 44, 46, 0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            z-index: 1;
+        }
+        .hook-card:hover { 
+            transform: translateY(-8px) scale(1.02); 
+            box-shadow: 0 20px 40px rgba(68, 44, 46, 0.15);
+            border-color: var(--tan-theme);
+        }
+        .hook-card::before {
+            content: '';
+            position: absolute;
+            top: 6px; left: 6px; right: 6px; bottom: 6px;
+            border: 1px dashed rgba(188, 163, 127, 0.4);
+            border-radius: 0.75rem;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Draggables */
+        .draggable { 
+            cursor: grab; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: white; 
+            border: 1px solid var(--tan-theme); 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .draggable:hover { 
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+            border-color: var(--green-theme);
+        }
+        .draggable.dragging { 
+            opacity: 0.7; 
+            cursor: grabbing; 
+            transform: scale(1.05); 
+            box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+        }
+        .drop-zone { 
+            border: 2px dashed rgba(188, 163, 127, 0.6); 
+            min-height: 140px; 
+            transition: all 0.3s ease; 
+            border-radius: 1rem; 
+            background-color: rgba(255,255,255,0.4); 
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 0.75rem;
+        }
+        .drop-zone.over { 
+            background-color: rgba(234, 219, 200, 0.8); 
+            border-color: var(--green-theme); 
+            transform: scale(1.02);
+            box-shadow: inset 0 0 15px rgba(95, 134, 112, 0.1);
+        }
+
+        /* Story Images - Premium Framing */
+        .story-image {
+            border: 10px solid white;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(0,0,0,0.05);
+            transform: rotate(-1.5deg);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: sepia(0.2) contrast(1.1);
+        }
+        .story-image:hover { 
+            transform: rotate(0deg) scale(1.03); 
+            filter: sepia(0) contrast(1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        /* Custom Inputs */
+        .premium-input {
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(188, 163, 127, 0.3);
+            transition: all 0.3s ease;
+        }
+        .premium-input:focus {
+            background: white;
+            border-color: var(--green-theme);
+            box-shadow: 0 0 0 3px rgba(95, 134, 112, 0.15);
+        }
+        
+        /* Buttons */
+        .btn-magic {
+            background: linear-gradient(135deg, var(--tan-theme) 0%, #a3875f 100%);
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(188, 163, 127, 0.3);
+            border: none;
+        }
+        .btn-magic:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(188, 163, 127, 0.5);
+            background: linear-gradient(135deg, #a3875f 0%, var(--tan-theme) 100%);
+        }
+
+        /* Answer Key Dropdown */
+        .answer-key-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+            opacity: 0;
+        }
+        .answer-key-content.open {
+            max-height: 2000px;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 min-h-screen">
+
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#BCA37F] opacity-10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-[#5F8670] opacity-10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="max-w-6xl mx-auto space-y-24">
+        
+        <header class="text-center pt-12 reveal mb-20">
+            <div class="inline-block px-5 py-1.5 mb-6 bg-gradient-to-r from-[#BCA37F] to-[#a3875f] text-white rounded-full font-bold text-xs uppercase tracking-[0.2em] shadow-lg border border-white/20">Unit 5 Grammar</div>
+            <h1 class="text-6xl md:text-8xl font-black mb-6 text-brown-dark drop-shadow-sm tracking-tight">The Grammar of Guessing</h1>
+            <p class="text-2xl text-stone-600 font-serif italic font-light">Speculating about the Past, Present, and Future</p>
+        </header>
+
+        <section class="reveal">
+            <div class="relative mb-10 text-center">
+                <span class="text-xs font-bold tracking-[0.2em] text-stone-500 uppercase border-b border-stone-300 pb-1">Activity 1</span>
+                <h2 class="text-4xl font-bold text-brown-dark mt-4 mb-3">The Time Traveler's Wallet</h2>
+                <p class="text-stone-600 italic text-lg max-w-2xl mx-auto">"I found this wallet outside. The items inside are... impossible. What's the explanation?"</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="hook-card group">
+                    <div class="text-center mb-5"><span class="text-6xl drop-shadow-md group-hover:scale-110 transition-transform duration-300 inline-block">🧾</span></div>
+                    <h3 class="text-xl font-bold text-center mb-2 font-serif text-brown-dark">The Receipt</h3>
+                    <p class="text-sm text-stone-500 text-center mb-6">A coffee receipt dated <strong class="text-stone-700">Oct 25, 2095</strong>.</p>
+                    <button onclick="toggleHook('h1')" class="w-full py-2.5 text-xs font-bold text-white bg-brown-dark rounded-lg hover:bg-stone-700 transition-colors shadow-md tracking-wider">REVEAL THEORY</button>
+                    <div id="h1" class="hidden mt-4 p-3 bg-stone-100/80 rounded-lg text-center text-sm font-serif italic border border-stone-200 shadow-inner">
+                        "It <strong>must be</strong> a prop for a movie."
+                    </div>
+                </div>
+                <div class="hook-card group">
+                    <div class="text-center mb-5"><span class="text-6xl drop-shadow-md group-hover:scale-110 transition-transform duration-300 inline-block">🪙</span></div>
+                    <h3 class="text-xl font-bold text-center mb-2 font-serif text-brown-dark">The Coin</h3>
+                    <p class="text-sm text-stone-500 text-center mb-6">Roman Denarius with a <strong class="text-stone-700">QR Code</strong>.</p>
+                    <button onclick="toggleHook('h2')" class="w-full py-2.5 text-xs font-bold text-white bg-brown-dark rounded-lg hover:bg-stone-700 transition-colors shadow-md tracking-wider">REVEAL THEORY</button>
+                    <div id="h2" class="hidden mt-4 p-3 bg-stone-100/80 rounded-lg text-center text-sm font-serif italic border border-stone-200 shadow-inner">
+                        "It <strong>can't be</strong> real money."
+                    </div>
+                </div>
+                <div class="hook-card group">
+                    <div class="text-center mb-5"><span class="text-6xl drop-shadow-md group-hover:scale-110 transition-transform duration-300 inline-block">📸</span></div>
+                    <h3 class="text-xl font-bold text-center mb-2 font-serif text-brown-dark">The Photo</h3>
+                    <p class="text-sm text-stone-500 text-center mb-6">Our school... completely <strong class="text-stone-700">underwater</strong>.</p>
+                    <button onclick="toggleHook('h3')" class="w-full py-2.5 text-xs font-bold text-white bg-brown-dark rounded-lg hover:bg-stone-700 transition-colors shadow-md tracking-wider">REVEAL THEORY</button>
+                    <div id="h3" class="hidden mt-4 p-3 bg-stone-100/80 rounded-lg text-center text-sm font-serif italic border border-stone-200 shadow-inner">
+                        "It <strong>might be</strong> a warning."
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="reveal">
+            <div class="relative mb-10 text-center">
+                <span class="text-xs font-bold tracking-[0.2em] text-stone-500 uppercase border-b border-stone-300 pb-1">Activity 2</span>
+                <h2 class="text-4xl font-bold text-brown-dark mb-3 mt-4">Time Capsules: Page 52</h2>
+                <p class="text-stone-600 italic text-lg max-w-2xl mx-auto">Read the text about time capsules and discuss the questions below.</p>
+            </div>
+
+            <div class="glass-panel p-8 rounded-3xl border border-stone-200/60 shadow-xl">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+                    <div class="rounded-xl overflow-hidden shadow-2xl border border-stone-300 transform hover:scale-[1.02] transition-transform duration-500">
+                        <img src="https://drive.google.com/uc?export=view&id=182WJeu9x7UMXhFncgGZz1_YWUo6lBVT9" alt="Page 52 Time Capsules Text" class="w-full h-auto object-contain bg-white" onerror="this.onerror=null;this.src='https://placehold.co/600x800/fdf6e3/442c2e?text=Page+52+Text';">
+                    </div>
+                    
+                    <div class="space-y-8 flex flex-col justify-center h-full">
+                        <div>
+                            <h3 class="text-3xl font-bold text-brown-dark font-serif border-b-2 border-tan-theme pb-3 mb-6">Comprehension & Analysis</h3>
+                            <ul class="space-y-6 text-stone-700">
+                                <li class="flex gap-4 items-start">
+                                    <span class="flex-shrink-0 w-8 h-8 rounded-full bg-green-theme text-white flex items-center justify-center font-bold shadow-md">1</span> 
+                                    <div class="text-lg leading-relaxed">Read the text carefully. What is the main purpose of burying a time capsule? Why do people do it?</div>
+                                </li>
+                                <li class="flex gap-4 items-start">
+                                    <span class="flex-shrink-0 w-8 h-8 rounded-full bg-green-theme text-white flex items-center justify-center font-bold shadow-md">2</span> 
+                                    <div class="text-lg leading-relaxed">What specific examples of items or time capsules are mentioned in the article?</div>
+                                </li>
+                                <li class="flex gap-4 items-start">
+                                    <span class="flex-shrink-0 w-8 h-8 rounded-full bg-tan-theme text-white flex items-center justify-center font-bold shadow-md">3</span> 
+                                    <div class="text-lg leading-relaxed"><strong>Grammar Hunt:</strong> Scan the text. Can you find sentences where the author makes a guess (speculates) about the past, present, or future?</div>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mt-auto p-5 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 shadow-inner relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-16 h-16 bg-amber-400 opacity-10 rounded-full blur-xl"></div>
+                            <p class="text-sm font-bold text-amber-800 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <span>💡</span> Transition Note
+                            </p>
+                            <p class="text-stone-700 text-base font-medium">Notice the words like <em class="text-brown-dark">"must have"</em>, <em class="text-brown-dark">"might be"</em>, or <em class="text-brown-dark">"could"</em> in the text? Let's analyze how those work below!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="reveal pt-10" id="structural-analysis">
+            <div class="glass-panel p-8 md:p-12 rounded-3xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 blur-3xl rounded-full"></div>
+                
+                <div class="text-center mb-10">
+                    <span class="text-xs font-bold tracking-[0.2em] text-stone-500 uppercase border-b border-stone-300 pb-1">Activity 3</span>
+                    <h2 class="text-4xl font-bold mt-4 text-brown-dark">Structural Analysis: The Mechanics of Speculation</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+                    <div class="bg-white/80 p-6 rounded-2xl border-t-4 border-rose-500 shadow-md border border-stone-100/50 flex flex-col">
+                        <h3 class="font-black text-rose-700 text-xl mb-1 uppercase tracking-widest text-center">The Past</h3>
+                        <div class="text-center bg-rose-50 rounded py-2 mb-4 text-xs font-mono text-rose-800 font-bold">Modal + HAVE + Past Participle</div>
+                        
+                        <div class="space-y-5 flex-grow">
+                            <div>
+                                <div class="flex justify-between items-end mb-1">
+                                    <p class="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Certainty</p>
+                                    <span class="text-[10px] font-bold text-rose-600">95%</span>
+                                </div>
+                                <div class="w-full bg-rose-100 rounded-full h-1.5 mb-3 shadow-inner overflow-hidden">
+                                    <div class="bg-rose-500 h-1.5 rounded-full" style="width: 95%"></div>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-rose-300 pl-2">"The people at the event <strong class="text-rose-600">must have been</strong> very upset."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-rose-300 pl-2">"They <strong class="text-rose-600">can't have had</strong> much imagination."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-rose-300 pl-2">"The dinosaurs <strong class="text-rose-600">must have been</strong> wiped out by an asteroid."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-rose-300 pl-2">"The tomb <strong class="text-rose-600">can't have been</strong> opened; the seal is unbroken."</p>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-end mb-1">
+                                    <p class="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Possibility</p>
+                                    <span class="text-[10px] font-bold text-rose-500">50%</span>
+                                </div>
+                                <div class="w-full bg-rose-100 rounded-full h-1.5 mb-3 shadow-inner overflow-hidden">
+                                    <div class="bg-rose-400 h-1.5 rounded-full" style="width: 50%"></div>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-rose-300 pl-2">"Archaeologists <strong class="text-rose-600">might have been</strong> hoping to find history."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-rose-300 pl-2">"Ancient builders <strong class="text-rose-600">could have used</strong> water to move stones."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-rose-300 pl-2">"He <strong class="text-rose-600">may have forgotten</strong> the map at the camp."</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/80 p-6 rounded-2xl border-t-4 border-green-theme shadow-md border border-stone-100/50 flex flex-col transform lg:scale-105 z-20">
+                        <h3 class="font-black text-green-700 text-xl mb-1 uppercase tracking-widest text-center">The Present</h3>
+                        <div class="text-center bg-green-50 rounded py-2 mb-4 text-xs font-mono text-green-800 font-bold">Modal + Base Verb</div>
+                        
+                        <div class="space-y-5 flex-grow">
+                            <div>
+                                <div class="flex justify-between items-end mb-1">
+                                    <p class="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Certainty</p>
+                                    <span class="text-[10px] font-bold text-green-700">95%</span>
+                                </div>
+                                <div class="w-full bg-green-100 rounded-full h-1.5 mb-3 shadow-inner overflow-hidden">
+                                    <div class="bg-green-600 h-1.5 rounded-full" style="width: 95%"></div>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-green-400 pl-2">"It <strong class="text-green-700">must be</strong> exciting to find a time capsule."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-green-400 pl-2">"That <strong class="text-green-700">can't be</strong> the real artifact."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-green-400 pl-2">"She <strong class="text-green-700">must be</strong> the new museum director."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-green-400 pl-2">"This translation <strong class="text-green-700">can't be</strong> correct."</p>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-end mb-1">
+                                    <p class="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Possibility</p>
+                                    <span class="text-[10px] font-bold text-green-600">50%</span>
+                                </div>
+                                <div class="w-full bg-green-100 rounded-full h-1.5 mb-3 shadow-inner overflow-hidden">
+                                    <div class="bg-green-500 h-1.5 rounded-full" style="width: 50%"></div>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-green-400 pl-2">"That <strong class="text-green-700">may seem</strong> like a long time to wait."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-green-400 pl-2">"They <strong class="text-green-700">could be</strong> working on the excavation now."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-green-400 pl-2">"That shiny rock <strong class="text-green-700">might be</strong> a precious gem."</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/80 p-6 rounded-2xl border-t-4 border-blue-500 shadow-md border border-stone-100/50 flex flex-col">
+                        <h3 class="font-black text-blue-700 text-xl mb-1 uppercase tracking-widest text-center">The Future</h3>
+                        <div class="text-center bg-blue-50 rounded py-2 mb-4 text-xs font-mono text-blue-800 font-bold">will probably / might + Base Verb</div>
+                        
+                        <div class="space-y-5 flex-grow">
+                            <div>
+                                <div class="flex justify-between items-end mb-1">
+                                    <p class="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Likely Prediction</p>
+                                    <span class="text-[10px] font-bold text-blue-600">80%</span>
+                                </div>
+                                <div class="w-full bg-blue-100 rounded-full h-1.5 mb-3 shadow-inner overflow-hidden">
+                                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: 80%"></div>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-blue-300 pl-2">"Many more time capsules <strong class="text-blue-600">will probably be</strong> opened."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-blue-300 pl-2">"Researchers <strong class="text-blue-600">will probably publish</strong> next month."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-blue-300 pl-2">"They <strong class="text-blue-600">won't likely find</strong> any more gold here."</p>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-end mb-1">
+                                    <p class="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Possibility</p>
+                                    <span class="text-[10px] font-bold text-blue-500">50%</span>
+                                </div>
+                                <div class="w-full bg-blue-100 rounded-full h-1.5 mb-3 shadow-inner overflow-hidden">
+                                    <div class="bg-blue-400 h-1.5 rounded-full" style="width: 50%"></div>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-blue-300 pl-2">"We <strong class="text-blue-600">might find</strong> out the truth tomorrow."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-blue-300 pl-2">"We <strong class="text-blue-600">might travel</strong> to Mars in the next decade."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-blue-300 pl-2">"The exhibit <strong class="text-blue-600">could open</strong> sooner than expected."</p>
+                                    <p class="text-sm text-stone-800 font-serif italic border-l-2 border-blue-300 pl-2">"She <strong class="text-blue-600">may not attend</strong> the conference."</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="grammar-drills" class="pt-10">
+            <div class="text-center mb-16 reveal">
+                <span class="text-xs font-bold tracking-[0.2em] text-stone-400 uppercase border-b border-stone-300 pb-1">Activity 4</span>
+                <h2 class="text-5xl font-bold mt-4 text-brown-dark">Grammar Drills</h2>
+            </div>
+
+            <div class="mb-24 reveal">
+                <h3 class="text-3xl font-bold mb-3 flex items-center gap-4 text-brown-dark font-serif">
+                    <span class="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-full text-lg shadow-lg">1</span> 
+                    The Timeline Sorter
+                </h3>
+                <p class="text-stone-600 mb-6 italic pl-14">Do these sentences talk about the past, present, or future? Drag them to the correct box.</p>
+                
+                <div class="mb-8 flex flex-wrap gap-4 p-6 bg-white/40 backdrop-blur-sm rounded-2xl min-h-[100px] border border-stone-200 shadow-inner" id="drill-time-pool">
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="present">It <strong>must be</strong> exciting to find a time capsule.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="future">Many more time capsules <strong>will probably be</strong> opened.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="past">They <strong>must have been</strong> very upset.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="past">They <strong>can't have had</strong> much imagination.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="present">That <strong>may seem</strong> like a long time.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="past">The pharaoh <strong>must have ruled</strong> for a long time.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="past">They <strong>could have built</strong> it using wooden ramps.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="present">This artifact <strong>must be</strong> very fragile.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="present">He <strong>might be</strong> hiding the map in his pocket.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="future">AI <strong>will probably translate</strong> this text eventually.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-blue-300" draggable="true" data-group="time" data-type="future">We <strong>could discover</strong> a new tomb next year.</div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-rose-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                        <h4 class="font-bold text-center mb-4 text-rose-700 uppercase text-sm tracking-widest">The Past</h4>
+                        <div class="drop-zone p-4 min-h-[160px]" data-group="time" data-accepts="past"></div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-green-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                        <h4 class="font-bold text-center mb-4 text-green-700 uppercase text-sm tracking-widest">The Present</h4>
+                        <div class="drop-zone p-4 min-h-[160px]" data-group="time" data-accepts="present"></div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-blue-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                        <h4 class="font-bold text-center mb-4 text-blue-700 uppercase text-sm tracking-widest">The Future</h4>
+                        <div class="drop-zone p-4 min-h-[160px]" data-group="time" data-accepts="future"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-10 reveal">
+                <h3 class="text-3xl font-bold mb-3 flex items-center gap-4 text-brown-dark font-serif">
+                    <span class="bg-green-theme text-white w-10 h-10 flex items-center justify-center rounded-full text-lg shadow-lg">2</span> 
+                    Sort by Certainty
+                </h3>
+                <p class="text-stone-600 mb-6 italic pl-14">Regardless of time, which statements show we are <strong>sure</strong>, and which show we are <strong>guessing</strong>?</p>
+                
+                <div class="mb-8 flex flex-wrap gap-4 p-6 bg-white/40 backdrop-blur-sm rounded-2xl min-h-[100px] border border-stone-200 shadow-inner" id="drill-certainty-pool">
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-tan-theme" draggable="true" data-group="certainty" data-type="certain">The museum <strong>must have bought</strong> it legally.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-tan-theme" draggable="true" data-group="certainty" data-type="possible">It <strong>might belong</strong> to a king.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-tan-theme" draggable="true" data-group="certainty" data-type="certain">That <strong>can't be</strong> real gold.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-tan-theme" draggable="true" data-group="certainty" data-type="possible">They <strong>could have been</strong> stolen.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-tan-theme" draggable="true" data-group="certainty" data-type="certain">The evidence <strong>must be</strong> genuine.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-tan-theme" draggable="true" data-group="certainty" data-type="certain">She <strong>can't have stolen</strong> the diamond.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-tan-theme" draggable="true" data-group="certainty" data-type="possible">They <strong>could be</strong> lost in the jungle.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-tan-theme" draggable="true" data-group="certainty" data-type="possible">The message <strong>may mean</strong> something else.</div>
+                    <div class="draggable p-4 rounded-xl text-sm font-medium border border-tan-theme" draggable="true" data-group="certainty" data-type="possible">He <strong>might have left</strong> the door unlocked.</div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-green-theme opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                        <h4 class="font-bold text-center mb-4 text-green-theme uppercase text-sm tracking-widest">Certain (90%+)</h4>
+                        <div class="drop-zone p-5 min-h-[160px]" data-group="certainty" data-accepts="certain"></div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-tan-theme opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                        <h4 class="font-bold text-center mb-4 text-tan-theme uppercase text-sm tracking-widest">Uncertain / Possible (50%)</h4>
+                        <div class="drop-zone p-5 min-h-[160px]" data-group="certainty" data-accepts="possible"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-24 reveal relative">
+                <div class="bg-gradient-to-r from-blue-900/95 to-indigo-900/95 border border-blue-400/50 p-6 md:p-8 rounded-2xl backdrop-blur-md max-w-4xl mx-auto shadow-[0_10px_30px_rgba(0,0,0,0.3)] relative overflow-hidden text-center transform hover:scale-[1.02] transition-transform duration-300">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-400 shadow-[0_0_15px_#60a5fa]"></div>
+                    <div class="flex flex-col items-center justify-center gap-3">
+                        <p class="text-blue-300 font-black uppercase text-sm tracking-[0.2em] flex items-center gap-2">
+                            <span class="animate-pulse text-2xl">⚠️</span> Textbook Practice
+                        </p>
+                        <p class="text-white text-xl md:text-2xl font-serif mt-2">
+                            Please go to <strong class="text-amber-400 text-3xl mx-2 font-sans tracking-tight">Page 121</strong> and complete <strong class="text-amber-400 text-2xl ml-1 font-sans">Exercises 1 & 2</strong>.
+                        </p>
+                        <p class="text-blue-200 text-sm mt-2 font-light italic">Complete these exercises in your book before moving on to the visual speculation drills below!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-24 reveal">
+                <div class="text-center mb-10">
+                    <span class="text-xs font-bold tracking-[0.2em] text-stone-500 uppercase border-b border-stone-300 pb-1">Activity 5</span>
+                </div>
+                <h3 class="text-3xl font-bold mb-8 flex items-center gap-4 text-brown-dark font-serif">
+                    <span class="bg-[#BCA37F] text-white w-10 h-10 flex items-center justify-center rounded-full text-lg shadow-lg">3</span> 
+                    What's the Story?
+                </h3>
+                
+                <div class="p-8 glass-panel rounded-3xl mb-8 story-card border border-stone-200/60" data-image-desc="an abandoned house">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                        <div class="relative w-full aspect-[4/3] rounded-xl overflow-visible">
+                            <img src="https://images.unsplash.com/photo-1518709766631-a6a7f45921c3?q=80&w=800&auto=format&fit=crop" alt="Abandoned House" class="story-image absolute inset-0 w-full h-full object-cover">
+                        </div>
+                        <div class="space-y-8">
+                            <h4 class="font-bold text-3xl text-brown-dark font-serif border-b border-stone-200 pb-4">The Abandoned House</h4>
+                            
+                            <div class="sentence-group space-y-2">
+                                <label class="text-xs font-bold uppercase text-tan-theme tracking-widest block pl-1">Make a Guess about the PAST (Certain)</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="text" class="premium-input flex-grow p-3.5 rounded-xl outline-none font-serif text-stone-700" placeholder="e.g. They must have left in a hurry..." data-modal-phrase="must have">
+                                    <button class="feedback-btn bg-green-theme hover:bg-[#4a6b5a] text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-md transition-all transform hover:-translate-y-0.5">Check</button>
+                                </div>
+                                <div class="feedback-display text-sm text-stone-600 mt-2 min-h-[1.5em] font-medium pl-1"></div>
+                            </div>
+                            
+                            <div class="sentence-group space-y-2">
+                                <label class="text-xs font-bold uppercase text-tan-theme tracking-widest block pl-1">Make a Guess about the PRESENT (Uncertain)</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="text" class="premium-input flex-grow p-3.5 rounded-xl outline-none font-serif text-stone-700" placeholder="e.g. It might be dangerous inside..." data-modal-phrase="might be">
+                                    <button class="feedback-btn bg-green-theme hover:bg-[#4a6b5a] text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-md transition-all transform hover:-translate-y-0.5">Check</button>
+                                </div>
+                                <div class="feedback-display text-sm text-stone-600 mt-2 min-h-[1.5em] font-medium pl-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dark-glass-panel text-white rounded-[2.5rem] p-8 md:p-16 relative overflow-hidden reveal mb-24">
+                <div class="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+                <div class="absolute top-[-20%] right-[-10%] w-96 h-96 bg-amber-500 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
+                <div class="absolute bottom-[-20%] left-[-10%] w-96 h-96 bg-emerald-500 rounded-full blur-[100px] opacity-10 pointer-events-none"></div>
+                
+                <div class="relative z-10 text-center max-w-4xl mx-auto">
+                    <div class="text-center mb-6">
+                        <span class="text-xs font-bold tracking-[0.2em] text-stone-400 uppercase border-b border-stone-500 pb-1">Activity 6</span>
+                    </div>
+                    <span class="inline-block px-4 py-1 mb-4 border border-tan-theme/50 text-tan-theme rounded-full text-xs font-bold tracking-widest uppercase bg-black/20">AI Tool</span>
+                    <h3 class="text-4xl md:text-5xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-[#EADBC8] to-[#BCA37F] font-serif">The Artifact Analyzer</h3>
+                    <p class="text-stone-300 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-light leading-relaxed">Step into the archaeologist's shoes. Unearth a mystery object, then document your speculation regarding its past use using <em class="text-tan-theme font-serif">must have, might have, or could have</em>.</p>
+                    
+                    <button id="get-artifact-btn" class="btn-magic text-white font-bold py-4 px-10 rounded-full text-lg tracking-wide uppercase">
+                        Unearth Artifact
+                    </button>
+
+                    <div id="artifact-box" class="hidden mt-12 max-w-2xl mx-auto bg-black/40 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-2xl">
+                        <div class="relative w-full h-64 md:h-80 mb-8 rounded-2xl overflow-hidden border border-tan-theme/30 shadow-[0_0_30px_rgba(188,163,127,0.15)] group">
+                            <img id="artifact-image" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" src="" alt="Mystery Artifact">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none"></div>
+                            <p id="artifact-desc" class="absolute bottom-4 left-6 font-bold text-2xl text-[#EADBC8] font-serif drop-shadow-lg"></p>
+                        </div>
+                        
+                        <div class="text-left space-y-4">
+                            <label class="text-xs text-tan-theme uppercase tracking-widest font-bold">Field Notes (Past Speculation):</label>
+                            <textarea id="user-speculation" class="w-full p-5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-tan-theme focus:ring-1 focus:ring-tan-theme h-32 font-serif text-lg resize-none transition-all shadow-inner" placeholder="E.g., It looks heavy, so it must have been a weapon..."></textarea>
+                            
+                            <button id="check-speculation-btn" class="w-full bg-gradient-to-r from-[#5F8670] to-emerald-700 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg text-lg uppercase tracking-wide border border-emerald-400/30">
+                                Analyze Grammar
+                            </button>
+                        </div>
+                        
+                        <div id="feedback-container" class="hidden mt-8 text-left bg-gradient-to-br from-white/95 to-white/90 text-brown-dark p-6 rounded-2xl border-l-4 border-green-theme shadow-2xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-green-theme opacity-5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                            <div id="feedback-loader" class="flex items-center gap-3 text-stone-500 font-medium">
+                                <div class="loader small-loader animate-spin border-t-green-theme"></div>
+                                AI is analyzing your notes...
+                            </div>
+                            <p id="feedback-content" class="whitespace-pre-wrap mt-2 text-base leading-relaxed font-medium relative z-10"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-20 pt-10 border-t border-white/10 max-w-4xl mx-auto relative z-10">
+                    <button onclick="toggleAnswerKey()" class="mx-auto flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-3 px-8 rounded-full transition-all text-sm uppercase tracking-widest">
+                        <span>📜</span> Reveal Historical Truths (Answer Key)
+                    </button>
+                    
+                    <div id="answer-key-box" class="answer-key-content mt-6 bg-white/95 text-stone-800 rounded-2xl shadow-2xl border border-stone-200 text-left">
+                        <div class="p-6 md:p-8">
+                            <h4 class="font-serif text-2xl font-bold text-brown-dark mb-6 border-b border-stone-200 pb-4">The Real Story Behind the Artifacts</h4>
+                            <ul id="answer-key-list" class="space-y-4 text-sm md:text-base">
+                                </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </div>
+
+    <script>
+        // --- SCROLL REVEAL ANIMATION ---
+        function revealScroll() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 100;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", revealScroll);
+        setTimeout(revealScroll, 100);
+
+        // --- HOOK LOGIC ---
+        function toggleHook(id) {
+            const el = document.getElementById(id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                el.classList.add('block', 'animate-[fadeIn_0.4s_ease-out]');
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            }
+        }
+
+        // --- ANSWER KEY LOGIC ---
+        function toggleAnswerKey() {
+            const box = document.getElementById('answer-key-box');
+            box.classList.toggle('open');
+            if(box.classList.contains('open')) {
+                setTimeout(() => {
+                    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- ARTIFACT ANALYZER LOGIC (Expanded to 18 items) ---
+            const artifacts = [
+                { name: "a Roman Dodecahedron", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Roman_dodecahedron_02.jpg/800px-Roman_dodecahedron_02.jpg", realFact: "Function unknown! Theories range from a knitting tool for gloves, a water pipe gauge, to a religious object." },
+                { name: "an Egyptian Headrest", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Headrest_of_Khentika.jpg/800px-Headrest_of_Khentika.jpg", realFact: "An ancient pillow. Used to keep heads cool, protect elaborate hairstyles, and keep bugs away while sleeping." },
+                { name: "a Greek Strigil", imageUrl: "https://i.redd.it/tl9ef5rg8vm41.jpg", realFact: "A cleaning tool. Ancient Greeks and Romans used it to scrape oil, sweat, and dirt off their skin before soap existed." },
+                { name: "the Antikythera Mechanism", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Antikythera_mechanism_%281%29.jpg/600px-Antikythera_mechanism_%281%29.jpg", realFact: "An ancient Greek analog computer used to predict astronomical positions and eclipses decades in advance." },
+                { name: "the Baghdad Battery", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Baghdad_Battery.jpg/600px-Baghdad_Battery.jpg", realFact: "A clay pot enclosing a copper cylinder. Speculated to be an early galvanic cell for electroplating, or simply a vessel for sacred scrolls." },
+                { name: "the Terracotta Army", imageUrl: "https://images.unsplash.com/photo-1599571343764-d24eb3606f7b?auto=format&fit=crop&w=600&q=80", realFact: "Thousands of life-sized clay soldiers buried with Qin Shi Huang, the first Emperor of China, to protect him in the afterlife." },
+                { name: "the Voynich Manuscript", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Voynich_Manuscript_%28114%29.jpg/600px-Voynich_Manuscript_%28114%29.jpg", realFact: "An illustrated codex hand-written in an unknown, undeciphered writing system. Some believe it's a medical text, others think it's a clever historical hoax." },
+                { name: "an Incan Quipu", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Quipu.png/600px-Quipu.png", realFact: "A system of knotted strings used by the Inca for record-keeping, tax accounting, and possibly even sharing historical narratives." },
+                { name: "the Phaistos Disc", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Phaistos_disk_-_side_A.jpg/600px-Phaistos_disk_-_side_A.jpg", realFact: "A Minoan clay disk covered with stamped symbols. Its purpose remains a mystery—possibly a religious hymn, a board game, or a calendar." },
+                { name: "the Lewis Chessmen", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Lewis_chessmen_01.jpg/600px-Lewis_chessmen_01.jpg", realFact: "Exquisitely carved 12th-century chess pieces made from walrus ivory, discovered in Scotland. Famous for their comical, worried facial expressions." },
+                { name: "the Venus of Willendorf", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Venus_of_Willendorf_frontview.jpg/600px-Venus_of_Willendorf_frontview.jpg", realFact: "A 30,000-year-old Paleolithic figurine. Widely believed to be a fertility symbol or an idealized representation of womanhood." },
+                { name: "Göbekli Tepe Pillars", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/G%C3%B6bekli_Tepe%2C_Urfa.jpg/600px-G%C3%B6bekli_Tepe%2C_Urfa.jpg", realFact: "Massive carved stones in Turkey dating back 11,000 years. Considered the world's oldest known temple, built even before the invention of agriculture." },
+                { name: "the Nazca Lines", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/L%C3%ADneas_de_Nazca%2C_Nazca%2C_Per%C3%BA%2C_2015-07-29%2C_DD_52.JPG/600px-L%C3%ADneas_de_Nazca%2C_Nazca%2C_Per%C3%BA%2C_2015-07-29%2C_DD_52.JPG", realFact: "Huge geoglyphs carved into the Peruvian desert. Likely created for ritual astronomical purposes or to map underground water sources." },
+                { name: "the Stone Spheres of Costa Rica", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Esferas_de_Piedra_-_Costa_Rica.jpg/600px-Esferas_de_Piedra_-_Costa_Rica.jpg", realFact: "Perfectly round stone spheres created by the Diquis culture. Thought to have been used as status symbols or navigation markers." },
+                { name: "the Rongorongo Glyphs", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Rongorongo.jpg/600px-Rongorongo.jpg", realFact: "A system of glyphs discovered on Easter Island. It remains completely undeciphered but is believed to be a rare independent invention of writing." },
+                { name: "a Viking Sunstone", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Iceland_spar_crystal_01.jpg/600px-Iceland_spar_crystal_01.jpg", realFact: "A transparent crystal (Iceland spar) used by Norse sailors to locate the sun in overcast or snowy skies for navigation." },
+                { name: "the Ubaid Lizardmen", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Ubaid_lizard.jpg/600px-Ubaid_lizard.jpg", realFact: "7,000-year-old terracotta statues from Mesopotamia featuring reptilian heads. Their exact function is unknown, but likely religious or protective." },
+                { name: "the Sajama Lines", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Sajama_Lines_from_Space.jpg/600px-Sajama_Lines_from_Space.jpg", realFact: "A massive network of perfectly straight lines carved into the Bolivian landscape, used by indigenous people as sacred pilgrimage routes." }
+            ];
+            
+            // Populate Answer Key List
+            const keyList = document.getElementById('answer-key-list');
+            artifacts.forEach(art => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong class="text-green-800 capitalize font-serif text-lg">${art.name}:</strong> <span class="text-stone-600">${art.realFact}</span>`;
+                li.className = "pb-3 border-b border-stone-100 last:border-0";
+                keyList.appendChild(li);
+            });
+
+            let currentArtifact = null;
+
+            const getArtifactBtn = document.getElementById('get-artifact-btn');
+            const artifactBox = document.getElementById('artifact-box');
+            const artifactImage = document.getElementById('artifact-image');
+            const artifactDesc = document.getElementById('artifact-desc');
+            const userSpeculation = document.getElementById('user-speculation');
+            const checkSpeculationBtn = document.getElementById('check-speculation-btn');
+            const feedbackContainer = document.getElementById('feedback-container');
+            const feedbackLoader = document.getElementById('feedback-loader');
+            const feedbackContent = document.getElementById('feedback-content');
+            
+            // API Function
+            async function callGeminiWithExponentialBackoff(prompt, maxRetries = 5) {
+                let delay = 1000;
+                
+                // 👇 👇 👇  ADD YOUR GEMINI API KEY HERE 👇 👇 👇 
+                const apiKey = "YOUR_API_KEY_HERE"; 
+                // 👆 👆 👆  ADD YOUR GEMINI API KEY HERE 👆 👆 👆 
+                
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        if (!response.ok) throw new Error(`Status: ${response.status}`);
+                        const result = await response.json();
+                        return result.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+                    } catch (error) {
+                        if (i === maxRetries - 1) return "Error connecting to AI. Please try again.";
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2;
+                    }
+                }
+            }
+
+            getArtifactBtn.addEventListener('click', () => {
+                artifactBox.classList.remove('hidden');
+                artifactBox.classList.add('animate-[fadeIn_0.6s_ease-out]');
+                feedbackContainer.classList.add('hidden');
+                userSpeculation.value = '';
+                currentArtifact = artifacts[Math.floor(Math.random() * artifacts.length)];
+                artifactImage.src = currentArtifact.imageUrl;
+                artifactDesc.textContent = `${currentArtifact.name}`;
+                
+                setTimeout(() => {
+                    artifactBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            });
+
+            checkSpeculationBtn.addEventListener('click', async () => {
+                const speculation = userSpeculation.value.trim();
+                if (speculation.length < 5) {
+                    alert("Please write a full sentence!");
+                    return;
+                }
+
+                if (apiKey === "YOUR_API_KEY_HERE" || apiKey === "") {
+                    alert("Developer Note: Don't forget to insert your Gemini API Key in the JavaScript!");
+                    return;
+                }
+
+                feedbackContainer.classList.remove('hidden');
+                feedbackLoader.classList.remove('hidden');
+                feedbackLoader.classList.add('flex');
+                feedbackContent.textContent = '';
+                checkSpeculationBtn.disabled = true;
+                checkSpeculationBtn.classList.add('opacity-50');
+
+                const prompt = `You are an encouraging English teacher. A student is speculating about an artifact (${currentArtifact.name}) and wrote: "${speculation}".
+                Provide feedback in 2 bullet points:
+                1. **Grammar:** Check if they used modal verbs of PAST speculation (must have, might have, could have, can't have) correctly. Correct any errors.
+                2. **Creativity:** Comment on their theory as an archaeologist.
+                Keep it short.`;
+
+                const response = await callGeminiWithExponentialBackoff(prompt);
+                
+                feedbackLoader.classList.add('hidden');
+                feedbackLoader.classList.remove('flex');
+                feedbackContent.innerHTML = response.replace(/\*\*(.*?)\*\*/g, '<strong class="text-green-800">$1</strong>');
+                checkSpeculationBtn.disabled = false;
+                checkSpeculationBtn.classList.remove('opacity-50');
+            });
+            
+            // --- DRAG & DROP LOGIC (Updated for multiple groups) ---
+            const draggables = document.querySelectorAll('.draggable');
+            const dropZones = document.querySelectorAll('.drop-zone');
+            let currentDragElement = null;
+            
+            draggables.forEach(drag => {
+                drag.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', e.target.getAttribute('data-type'));
+                    e.target.classList.add('dragging');
+                    currentDragElement = e.target;
+                });
+                drag.addEventListener('dragend', (e) => {
+                    e.target.classList.remove('dragging');
+                });
+            });
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', e => {
+                    // Only allow drop if it's the correct drill group
+                    if(currentDragElement && currentDragElement.getAttribute('data-group') === zone.getAttribute('data-group')) {
+                        e.preventDefault();
+                        zone.classList.add('over');
+                    }
+                });
+                zone.addEventListener('dragleave', () => { zone.classList.remove('over'); });
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    zone.classList.remove('over');
+                    
+                    const requiredType = zone.getAttribute('data-accepts');
+                    const requiredGroup = zone.getAttribute('data-group');
+                    const draggedType = currentDragElement.getAttribute('data-type');
+                    const draggedGroup = currentDragElement.getAttribute('data-group');
+                    
+                    if (requiredGroup === draggedGroup) {
+                        if (requiredType === draggedType) {
+                            zone.appendChild(currentDragElement);
+                            currentDragElement.classList.remove('bg-white', 'border-blue-300', 'border-tan-theme');
+                            currentDragElement.classList.add('bg-green-50', 'border-green-400', 'text-green-900', 'shadow-sm');
+                        } else {
+                            currentDragElement.classList.add('animate-[pulse_0.4s_ease-in-out_2]', 'bg-red-50', 'border-red-400', 'text-red-900');
+                            setTimeout(() => {
+                                currentDragElement.classList.remove('animate-[pulse_0.4s_ease-in-out_2]', 'bg-red-50', 'border-red-400', 'text-red-900');
+                            }, 800);
+                        }
+                    }
+                });
+            });
+
+            // --- STRICT FEEDBACK LOGIC (Visual Speculation) ---
+            const storyDrills = document.querySelectorAll('.sentence-group');
+            storyDrills.forEach(group => {
+                const btn = group.querySelector('.feedback-btn');
+                const input = group.querySelector('input');
+                const display = group.querySelector('.feedback-display');
+                
+                btn.addEventListener('click', async () => {
+                    const sentence = input.value.trim();
+                    const modalPhrase = input.getAttribute('data-modal-phrase');
+                    
+                    if (sentence.length === 0) {
+                        display.textContent = "Please write a sentence first.";
+                        display.style.color = '#ef4444';
+                        return;
+                    }
+
+                    if (apiKey === "YOUR_API_KEY_HERE" || apiKey === "") {
+                        alert("Developer Note: Don't forget to insert your Gemini API Key in the JavaScript!");
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.classList.add('opacity-70');
+                    display.innerHTML = `<div class="loader small-loader animate-spin border-t-[#5F8670] inline-block align-middle mr-2"></div><span class="align-middle">Checking...</span>`;
+                    display.style.color = '#78716c';
+
+                    const prompt = `Student wrote: "${sentence}". Task: Speculate about an image using a form similar to '${modalPhrase}'. 
+                    Check their grammar specifically regarding modal verbs of speculation (past/present/future).
+                    If the grammar is fully correct for speculation, reply "Correct." followed by a very brief encouraging comment. 
+                    If incorrect, reply "Incorrect." and explain the error briefly.`;
+
+                    const response = await callGeminiWithExponentialBackoff(prompt);
+
+                    display.textContent = response;
+                    if (response.toLowerCase().includes('correct') && !response.toLowerCase().includes('incorrect')) {
+                        display.style.color = '#15803d'; // Green
+                    } else {
+                        display.style.color = '#b91c1c'; // Red
+                    }
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-70');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
